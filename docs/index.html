@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MOVA — Manejar una silla de ruedas con la cara</title>
+<meta name="description" content="MOVA: silla de ruedas controlada con gestos faciales. Sillódromo 2026, INAOE.">
+<meta property="og:title" content="MOVA — Manejar una silla de ruedas con la cara">
+<meta property="og:image" content="media/hero-still.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400..800&display=swap">
+<style>
+  :root {
+    --ink: #0B0B0D; --paper: #F5F5F7; --teal: #2FD6B5; --teal-dark: #0A7C68;
+    --mute-d: #A1A1A8; --mute-l: #4A4A50;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+  body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+
+  #viewport { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+  #stage { position: absolute; width: 1920px; height: 1080px; left: 50%; top: 50%; transform-origin: center center; }
+
+  .slide { position: absolute; inset: 0; padding: 128px; display: flex; flex-direction: column;
+           opacity: 0; visibility: hidden; transition: opacity .6s ease, visibility 0s linear .6s; overflow: hidden; }
+  .slide.active { opacity: 1; visibility: visible; transition: opacity .6s ease, visibility 0s; }
+  .dark { background: var(--ink); color: var(--paper); }
+  .light { background: var(--paper); color: var(--ink); }
+
+  p, h1, h2, h3 { margin: 0; }
+  .eyebrow { font-size: 28px; font-weight: 600; letter-spacing: .02em; color: var(--teal); margin-bottom: 24px; }
+  .light .eyebrow { color: var(--teal-dark); }
+  .mega { font-size: 200px; font-weight: 800; letter-spacing: -.045em; line-height: .95; }
+  .h1 { font-size: 112px; font-weight: 700; letter-spacing: -.035em; line-height: 1.02; }
+  .h2 { font-size: 72px; font-weight: 700; letter-spacing: -.03em; line-height: 1.05; }
+  .lead { font-size: 40px; line-height: 1.35; }
+  .body { font-size: 28px; line-height: 1.45; }
+  .dark .lead, .dark .body { color: var(--mute-d); }
+  .light .lead, .light .body { color: var(--mute-l); }
+  .accent { color: var(--teal); }
+  .light .accent { color: var(--teal-dark); }
+
+  /* entrada escalonada */
+  .slide .in { opacity: 0; transform: translateY(36px); }
+  .slide.active .in { animation: rise .7s cubic-bezier(.2,.7,.2,1) forwards; }
+  .slide.active .in.d1 { animation-delay: .15s; }
+  .slide.active .in.d2 { animation-delay: .3s; }
+  .slide.active .in.d3 { animation-delay: .45s; }
+  @keyframes rise { to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) {
+    .slide .in { opacity: 1; transform: none; }
+    .slide.active .in { animation: none; }
+  }
+
+  /* portada */
+  .cover { flex-direction: row; align-items: center; justify-content: space-between; }
+  .cover-text { width: 980px; display: flex; flex-direction: column; gap: 32px; }
+  .cover video { width: 560px; height: 772px; object-fit: cover; border-radius: 40px; background: #18181C; }
+  .meta { font-size: 24px; color: var(--mute-d); }
+
+  .center { justify-content: center; align-items: center; text-align: center; }
+  .center .lead { width: 1300px; margin-top: 40px; }
+
+  .grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-top: 72px; }
+  .tile { background: #18181C; border-radius: 32px; padding: 44px 40px; display: flex; flex-direction: column; gap: 16px; }
+  .tile .k { font-size: 28px; font-weight: 600; color: var(--teal); }
+  .tile .v { font-size: 44px; font-weight: 700; letter-spacing: -.02em; line-height: 1.1; }
+  .tile .d { font-size: 24px; line-height: 1.4; color: var(--mute-d); }
+
+  .flow { display: flex; gap: 16px; margin-top: 80px; }
+  .step { flex: 1; background: #FFF; border-radius: 28px; padding: 36px 28px; display: flex; flex-direction: column; gap: 12px; }
+  .step .n { font-size: 24px; font-weight: 600; color: var(--teal-dark); }
+  .step h3 { font-size: 32px; font-weight: 700; line-height: 1.15; }
+  .step p { font-size: 24px; line-height: 1.4; color: var(--mute-l); }
+  .foot { font-size: 24px; color: var(--mute-l); margin-top: 48px; }
+
+  .stats { display: flex; justify-content: space-between; margin-top: 96px; }
+  .stat { width: 480px; display: flex; flex-direction: column; gap: 16px; }
+  .stat .num { font-size: 144px; font-weight: 800; letter-spacing: -.04em; line-height: 1; color: var(--teal); }
+  .stat .lbl { font-size: 28px; line-height: 1.4; color: var(--mute-d); }
+
+  .shots { display: flex; gap: 32px; margin-top: 64px; }
+  .shot { flex: 1; display: flex; flex-direction: column; gap: 20px; }
+  .shot img { width: 520px; height: 326px; object-fit: contain; border-radius: 20px; background: #FFF; box-shadow: 0 20px 60px rgba(11,11,13,.12); }
+  .shot p { font-size: 24px; line-height: 1.4; color: var(--mute-l); }
+  .shot b { color: var(--ink); }
+
+  .split { flex-direction: row; align-items: center; justify-content: space-between; }
+  .split-text { width: 620px; display: flex; flex-direction: column; gap: 28px; }
+  .split img { width: 980px; height: 614px; object-fit: contain; border-radius: 28px; background: #FFF; }
+  .phrases { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
+  .phrases p { font-size: 28px; font-weight: 600; }
+
+  .full { padding: 0; }
+  .full video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .scrim { position: absolute; left: 0; right: 0; bottom: 0; height: 640px; background: linear-gradient(180deg, rgba(11,11,13,0) 0%, rgba(11,11,13,.92) 55%); }
+  .over { position: absolute; left: 128px; top: 720px; width: 1500px; display: flex; flex-direction: column; gap: 20px; }
+  .over .lead { color: #D2D2D7; }
+
+  .stack { font-size: 28px; color: var(--mute-d); margin-top: 48px; }
+  .link { font-size: 32px; font-weight: 600; margin-top: 20px; }
+  .link a { color: var(--teal); text-decoration: none; }
+  .link a:hover { text-decoration: underline; }
+
+  /* controles */
+  #ui { position: fixed; left: 0; right: 0; bottom: 18px; display: flex; justify-content: center; align-items: center; gap: 14px; z-index: 10; opacity: 0; transition: opacity .4s; }
+  body.show-ui #ui, #ui:hover { opacity: 1; }
+  #ui button { background: rgba(40,40,46,.72); color: #F5F5F7; border: 0; border-radius: 999px; width: 40px; height: 40px; font-size: 18px; cursor: pointer; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+  #dots { display: flex; gap: 8px; padding: 12px 16px; background: rgba(40,40,46,.72); border-radius: 999px; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+  #dots span { width: 8px; height: 8px; border-radius: 50%; background: rgba(245,245,247,.35); cursor: pointer; transition: background .3s, width .3s; }
+  #dots span.on { background: #F5F5F7; width: 22px; border-radius: 4px; }
+  #hint { position: fixed; top: 18px; right: 22px; font: 500 13px/1 'Inter', sans-serif; color: rgba(245,245,247,.55); z-index: 10; opacity: 0; transition: opacity .4s; }
+  body.show-ui #hint { opacity: 1; }
+</style>
+</head>
+<body class="show-ui">
+<div id="viewport"><div id="stage">
+
+  <section class="slide dark cover" aria-label="1. Portada">
+    <div class="cover-text">
+      <p class="eyebrow in">Sillódromo 2026 · INAOE</p>
+      <h1 class="mega in d1">MOVA</h1>
+      <p class="lead in d2">Manejar una silla de ruedas <span class="accent">con la cara.</span></p>
+      <p class="meta in d3">Visión por computadora · Python · MediaPipe · Arduino</p>
+    </div>
+    <video src="media/mova-hero.mp4" poster="media/hero-still.jpg" muted loop playsinline preload="auto" aria-label="MOVA recorriendo la pista del Sillódromo 2026"></video>
+  </section>
+
+  <section class="slide light center" aria-label="2. El problema">
+    <p class="eyebrow in">El problema</p>
+    <h2 class="h1 in d1">Sin manos,<br>un joystick no sirve.</h2>
+    <p class="lead in d2">La silla tiene que entender la intención con lo que sí se puede mover, sin confundir un gesto casual con una orden.</p>
+  </section>
+
+  <section class="slide dark" aria-label="3. Las señales del rostro">
+    <p class="eyebrow in">La idea</p>
+    <h2 class="h1 in d1">Tu rostro es el control.</h2>
+    <div class="grid4 in d2">
+      <div class="tile"><p class="k">Cabeza</p><p class="v">Elige la dirección.</p><p class="d">Giro e inclinación (yaw y pitch) estimados con solvePnP a partir de 6 puntos.</p></div>
+      <div class="tile"><p class="k">Cejas</p><p class="v">Cambia de página.</p><p class="d">Levantarlas y sostener pasa a la siguiente página de comandos.</p></div>
+      <div class="tile"><p class="k">Ojos</p><p class="v">Cancela el gesto.</p><p class="d">Si el cierre (EAR) supera el umbral, se cancela y se pide parada.</p></div>
+      <div class="tile"><p class="k">Boca</p><p class="v">Detiene la silla.</p><p class="d">Abrirla solicita parada y regresa al menú.</p></div>
+    </div>
+  </section>
+
+  <section class="slide light" aria-label="4. Cómo funciona">
+    <p class="eyebrow in">Cómo funciona</p>
+    <h2 class="h2 in d1">De la cámara a las ruedas.</h2>
+    <div class="flow in d2">
+      <div class="step"><p class="n">01</p><h3>Cámara frontal</h3><p>OpenCV captura, refleja y escala cada cuadro.</p></div>
+      <div class="step"><p class="n">02</p><h3>MediaPipe</h3><p>Landmarks faciales en modo video.</p></div>
+      <div class="step"><p class="n">03</p><h3>Controlador</h3><p>Suavizado, calibración y umbrales en JSON.</p></div>
+      <div class="step"><p class="n">04</p><h3>Interfaz MOVA</h3><p>Conducir, órdenes a Alexa y frases.</p></div>
+      <div class="step"><p class="n">05</p><h3>Arduino</h3><p>USB serial a 9600 baudios hacia la silla.</p></div>
+    </div>
+    <p class="foot in d3">Captura, visión, audio y escritura serial corren en hilos separados. La cámara trasera solo da vista al retroceder.</p>
+  </section>
+
+  <section class="slide dark" aria-label="5. Gestos intencionales">
+    <p class="eyebrow in">Diseñada para no equivocarse</p>
+    <h2 class="h1 in d1">Un gesto cuenta<br>solo si es intencional.</h2>
+    <div class="stats in d2">
+      <div class="stat"><p class="num">2 s</p><p class="lbl">de calibración: cada usuario registra su postura de reposo.</p></div>
+      <div class="stat"><p class="num">0.45 s</p><p class="lbl">sosteniendo el gesto antes de que se ejecute.</p></div>
+      <div class="stat"><p class="num">3 s</p><p class="lbl">para elegir en el menú principal, y volver al centro antes de otra selección.</p></div>
+    </div>
+  </section>
+
+  <section class="slide light" aria-label="6. La interfaz">
+    <p class="eyebrow in">La interfaz</p>
+    <h2 class="h2 in d1">Mueve la cabeza. Sostén. Listo.</h2>
+    <div class="shots in d2">
+      <div class="shot"><img src="media/main.jpg" alt="Menú principal de MOVA con el rostro del usuario al centro"><p><b>Menú principal.</b> Conducir o comunicarse.</p></div>
+      <div class="shot"><img src="media/movement.jpg" alt="Pantalla de conducción con cámara delantera y flechas de dirección"><p><b>Conducción.</b> La dirección se ilumina al girar la cabeza.</p></div>
+      <div class="shot"><img src="media/rearmovement.jpg" alt="Pantalla de reversa con la vista de la cámara trasera"><p><b>Reversa.</b> La cámara trasera aparece al retroceder.</p></div>
+    </div>
+  </section>
+
+  <section class="slide light split" aria-label="7. Voz">
+    <div class="split-text">
+      <p class="eyebrow in">Más que moverse</p>
+      <h2 class="h2 in d1">También le da voz.</h2>
+      <p class="body in d2">La misma interfaz reproduce órdenes para Alexa y frases de comunicación, con grabaciones o síntesis de voz.</p>
+      <div class="phrases in d3">
+        <p>“Alexa, enciende el foco.”</p>
+        <p>“Alexa, abre YouTube.”</p>
+        <p>“Muchas gracias.”</p>
+      </div>
+    </div>
+    <img class="in d1" src="media/interacciones.jpg" alt="Pantalla de interacciones con órdenes para Alexa alrededor del rostro">
+  </section>
+
+  <section class="slide dark full" aria-label="8. Resultado">
+    <video src="media/mova-demo.mp4" poster="media/demo-still.jpg" muted loop playsinline preload="auto" aria-label="La silla MOVA avanzando en la pista del Sillódromo 2026"></video>
+    <div class="scrim"></div>
+    <div class="over">
+      <p class="eyebrow in">El resultado</p>
+      <h2 class="h2 in d1">Recorrió la pista del Sillódromo 2026.<br>Solo con gestos.</h2>
+      <p class="lead in d2">INAOE · probada en pista</p>
+    </div>
+  </section>
+
+  <section class="slide dark center" aria-label="9. Cierre">
+    <h2 class="mega in">MOVA</h2>
+    <p class="lead in d1">Independencia, un gesto a la vez.</p>
+    <p class="stack in d2">Python · MediaPipe · OpenCV · Tkinter · Arduino</p>
+    <p class="link in d3"><a href="https://github.com/RoshTzsche/mova">github.com/RoshTzsche/mova</a></p>
+  </section>
+
+</div></div>
+
+<div id="ui">
+  <button id="prev" aria-label="Anterior">‹</button>
+  <div id="dots"></div>
+  <button id="next" aria-label="Siguiente">›</button>
+  <button id="fs" aria-label="Pantalla completa">⤢</button>
+</div>
+<div id="hint">← → para navegar · F pantalla completa</div>
+
+<script>
+(function () {
+  var stage = document.getElementById('stage');
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var dots = document.getElementById('dots');
+  var cur = 0;
+
+  function fit() {
+    var s = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+    stage.style.transform = 'translate(-50%, -50%) scale(' + s + ')';
+  }
+
+  slides.forEach(function (_, i) {
+    var d = document.createElement('span');
+    d.title = 'Diapositiva ' + (i + 1);
+    d.addEventListener('click', function (e) { e.stopPropagation(); go(i); });
+    dots.appendChild(d);
+  });
+
+  function go(i) {
+    i = Math.max(0, Math.min(slides.length - 1, i));
+    slides.forEach(function (s, j) {
+      var on = j === i;
+      s.classList.toggle('active', on);
+      s.querySelectorAll('video').forEach(function (v) {
+        if (on) { v.currentTime = 0; var p = v.play(); if (p && p.catch) p.catch(function () {}); }
+        else { v.pause(); }
+      });
+    });
+    Array.prototype.forEach.call(dots.children, function (d, j) { d.classList.toggle('on', j === i); });
+    cur = i;
+    if (history.replaceState) history.replaceState(null, '', '#' + (i + 1));
+  }
+
+  function fullscreen() {
+    var el = document.documentElement;
+    if (!document.fullscreenElement && el.requestFullscreen) el.requestFullscreen();
+    else if (document.exitFullscreen) document.exitFullscreen();
+  }
+
+  document.addEventListener('keydown', function (e) {
+    if (['ArrowRight', 'ArrowDown', 'PageDown', ' ', 'Enter'].indexOf(e.key) > -1) { e.preventDefault(); go(cur + 1); }
+    else if (['ArrowLeft', 'ArrowUp', 'PageUp', 'Backspace'].indexOf(e.key) > -1) { e.preventDefault(); go(cur - 1); }
+    else if (e.key === 'Home') go(0);
+    else if (e.key === 'End') go(slides.length - 1);
+    else if (e.key === 'f' || e.key === 'F') fullscreen();
+  });
+
+  document.getElementById('prev').addEventListener('click', function (e) { e.stopPropagation(); go(cur - 1); });
+  document.getElementById('next').addEventListener('click', function (e) { e.stopPropagation(); go(cur + 1); });
+  document.getElementById('fs').addEventListener('click', function (e) { e.stopPropagation(); fullscreen(); });
+
+  document.getElementById('viewport').addEventListener('click', function (e) {
+    if (e.target.closest('a')) return;
+    go(e.clientX > window.innerWidth / 3 ? cur + 1 : cur - 1);
+  });
+
+  var x0 = null;
+  document.addEventListener('touchstart', function (e) { x0 = e.touches[0].clientX; }, { passive: true });
+  document.addEventListener('touchend', function (e) {
+    if (x0 === null) return;
+    var dx = e.changedTouches[0].clientX - x0;
+    if (Math.abs(dx) > 40) go(dx < 0 ? cur + 1 : cur - 1);
+    x0 = null;
+  }, { passive: true });
+
+  var t;
+  document.addEventListener('mousemove', function () {
+    document.body.classList.add('show-ui');
+    clearTimeout(t);
+    t = setTimeout(function () { document.body.classList.remove('show-ui'); }, 2200);
+  });
+  t = setTimeout(function () { document.body.classList.remove('show-ui'); }, 3000);
+
+  window.addEventListener('resize', fit);
+  fit();
+  var start = parseInt((location.hash || '').slice(1), 10);
+  go(isNaN(start) ? 0 : start - 1);
+})();
+</script>
+</body>
+</html>

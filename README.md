@@ -1,5 +1,16 @@
 # MOVA · Sillódromo Chair Control
 
+<p align="center">
+  <a href="https://roshtzsche.github.io/mova/">
+    <img src="docs/media/mova-demo.gif" alt="MOVA recorriendo la pista del Sillódromo 2026, controlada solo con gestos faciales" width="320">
+  </a>
+</p>
+
+<p align="center">
+  <b>Recorrió la pista del Sillódromo 2026 (INAOE) controlada solo con gestos.</b><br>
+  <a href="https://roshtzsche.github.io/mova/"><b>▶ Ver la presentación</b></a> · <a href="docs/media/mova-hero.mp4">video del recorrido</a> · <a href="docs/media/mova-demo.mp4">video demo</a>
+</p>
+
 MOVA es una interfaz de control mediante movimientos de cabeza y gestos faciales para el proyecto Sillódromo. Permite seleccionar direcciones de conducción, reproducir órdenes habladas para Alexa y emitir frases de comunicación desde una misma aplicación.
 
 El sistema utiliza una cámara, MediaPipe y reglas geométricas y temporales. **MediaPipe localiza puntos del rostro; el controlador interpreta los gestos; la interfaz decide qué acción ejecutar.**
